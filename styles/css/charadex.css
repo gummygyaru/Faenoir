@@ -27,17 +27,17 @@ body {
   /* ============================================================= */
   /* Backgrounds
   ================================================================ */
-  --cd-body-background-color: #c3f4ec;
-  --cd-content-background-color: #ff6fb5;
-  --cd-faded-background-color: #ffdada;
+  --cd-body-background-color: #c3f4c5;
+  --cd-content-background-color: #ffd0e4;
+  --cd-faded-background-color: #fff1f1;
 
   /* Background Extras */
-  --cd-body-background-image: url(https://media.istockphoto.com/id/1334677974/vector/pixel-art-meadow-with-flowers-background-seamless-lawn-texture-backdrop.jpg?s=612x612&w=0&k=20&c=_4t1j7iQvnWXOkow5EHmmWdnRbrLZ-qmK1m0MiCPYGI=);
+  --cd-body-background-image: url(https://i.pinimg.com/1200x/5e/e7/09/5ee709c895ccef30d9582c6120e78ece.jpg);
 
   /* ============================================================= */
   /* Text
   ================================================================ */
-  --cd-body-text-color: #36cf8a;
+  --cd-body-text-color: #cfffe9;
   --cd-faded-text-color: #d4fadd;
 
   /* ============================================================= */
@@ -51,7 +51,7 @@ body {
   /* ============================================================= */
   /* Navbar
   ================================================================ */
-  --cd-navbar-background-color: #bfcdff;
+  --cd-navbar-background-color: #7effc9;
   --cd-navbar-brand-color: var(--cd-primary-color);
   --cd-navbar-brand-color-hover: var(--cd-secondary-color);
   --cd-navbar-text-color: var(--cd-content-background-color);
