@@ -16,7 +16,7 @@ let charadex = {};
 /* ==================================================================== */
 charadex.site = {
   title: "Charadex",
-  url: "https://charadex-team.github.io/charadex-v1.0/",
+  url: "https://gummygyaru.github.io/Faenoir/",
   description: `A tool for organizing small ARPGs and species.`
 }
 
