@@ -15,35 +15,35 @@ body {
   /* ============================================================= */
   /* Primary Color
   ================================================================ */
-  --cd-primary-color: #8FB7D4;
+  --cd-primary-color: #3fff92;
   --cd-primary-text-color: #fff;
 
   /* ============================================================= */
   /* Secondary Color
   ================================================================ */
-  --cd-secondary-color: #939799;
+  --cd-secondary-color: #7affb4;
   --cd-secondary-text-color: #fff;
 
   /* ============================================================= */
   /* Backgrounds
   ================================================================ */
-  --cd-body-background-color: #f8f8f8;
-  --cd-content-background-color: #ffffff;
-  --cd-faded-background-color: #f8f8f8;
+  --cd-body-background-color: #c3f4ec;
+  --cd-content-background-color: #ff6fb5;
+  --cd-faded-background-color: #ffdada;
 
   /* Background Extras */
-  --cd-body-background-image: url();
+  --cd-body-background-image: url(https://media.istockphoto.com/id/1334677974/vector/pixel-art-meadow-with-flowers-background-seamless-lawn-texture-backdrop.jpg?s=612x612&w=0&k=20&c=_4t1j7iQvnWXOkow5EHmmWdnRbrLZ-qmK1m0MiCPYGI=);
 
   /* ============================================================= */
   /* Text
   ================================================================ */
-  --cd-body-text-color: #303030;
-  --cd-faded-text-color: #575757;
+  --cd-body-text-color: #36cf8a;
+  --cd-faded-text-color: #d4fadd;
 
   /* ============================================================= */
   /* Borders
   ================================================================ */
-  --cd-border-color: rgba(0, 0, 0, 0.125);
+  --cd-border-color: rgba(255, 135, 135, 0.285);
   --cd-border-width: 1px;
   --cd-border-style: solid;
   --cd-border-radius: 1rem;
@@ -51,7 +51,7 @@ body {
   /* ============================================================= */
   /* Navbar
   ================================================================ */
-  --cd-navbar-background-color: #222222;
+  --cd-navbar-background-color: #bfcdff;
   --cd-navbar-brand-color: var(--cd-primary-color);
   --cd-navbar-brand-color-hover: var(--cd-secondary-color);
   --cd-navbar-text-color: var(--cd-content-background-color);
@@ -69,21 +69,21 @@ body {
   /* Rarities
   ================================================================ */
 
-  --cd-rarity-common-bg: #d58353;
-  --cd-rarity-common-txt: #fcf4ed;
+  --cd-rarity-common-bg: #ffb4c8;
+  --cd-rarity-common-txt: #c75b64;
 
-  --cd-rarity-uncommon-bg: #e0bb68;
+  --cd-rarity-uncommon-bg: #c5efff;
   --cd-rarity-uncommon-txt: var(--cd-rarity-common-txt);
   
-  --cd-rarity-rare-bg: #97b34e;
+  --cd-rarity-rare-bg: #d0ff58;
   --cd-rarity-rare-txt: var(--cd-rarity-common-txt);
 
-  --cd-rarity-veryrare-bg: #548b71;
-  --cd-rarity-veryrare-txt: var(--cd-rarity-common-txt);
+  --cd-rarity-event-bg: #b5ffdd;
+  --cd-rarity-event-txt: var(--cd-rarity-common-txt);
 
   /* Legendary & Mythic */
-  --cd-rarity-legendary-bg: #5a473e;
-  --cd-rarity-legendary-txt: var(--cd-rarity-common-txt);
+  --cd-rarity-shop-bg: #ffcf32;
+  --cd-rarity-shop-txt: var(--cd-rarity-common-txt);
 
 
   /* ============================================================= */
@@ -125,7 +125,7 @@ body {
   /* Link
   ================================================================ */
 
-  --cd-link-text-color: #4c8ebd;
+  --cd-link-text-color: #ff8397;
   --cd-link-text-color-hover: var(--cd-secondary-color);
 
 
