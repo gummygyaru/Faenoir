@@ -32,7 +32,7 @@ body {
   --cd-faded-background-color: #fff8f9;      /* gentle blush */
 
   /* Background Extras */
-  --cd-body-background-image: url(https://i.pinimg.com/736x/d0/1b/d8/d01bd852b0f6e9fe0d7fdd25e84a97b6.jpg);
+  --cd-body-background-image: url(https://i.pinimg.com/1200x/ad/2f/7e/ad2f7eeffac22d734879557292291644.jpg);
 
   /* ============================================================= */
   /* Text */
@@ -62,8 +62,8 @@ body {
   /* ============================================================= */
   /* Main Fonts
   ================================================================ */
---cd-body-font-family: 'Poppins', sans-serif;   /* clean but friendly */
---cd-header-font-family: 'Pacifico', cursive;   /* handwritten floral vibes */
+  --cd-body-font-family: 'Montserrat', sans-serif;
+  --cd-header-font-family: 'Comfortaa', sans-serif;
   
   /* ============================================================= */
   /* Rarities
