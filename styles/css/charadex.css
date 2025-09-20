@@ -15,13 +15,13 @@ body {
   /* ============================================================= */
   /* Primary Color (blue hydrangea) */
   /* ============================================================= */
-  --cd-primary-color: #7aa7ff;
+  --cd-primary-color: #ffbbd7;
   --cd-primary-text-color: #ffffff;
 
   /* ============================================================= */
   /* Secondary Color (leafy green) */
   /* ============================================================= */
-  --cd-secondary-color: #6ed6a0;
+  --cd-secondary-color: #f8a9ff;
   --cd-secondary-text-color: #ffffff;
 
   /* ============================================================= */
@@ -32,7 +32,7 @@ body {
   --cd-faded-background-color: #fff8f9;      /* gentle blush */
 
   /* Background Extras */
-  --cd-body-background-image: url(https://i.pinimg.com/1200x/ad/2f/7e/ad2f7eeffac22d734879557292291644.jpg);
+  --cd-body-background-image: url(https://i.postimg.cc/ZqtqBgJT/Illustration.png);
 
   /* ============================================================= */
   /* Text */
