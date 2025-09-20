@@ -13,37 +13,37 @@ body {
   /* font swap, then you'll only need to edit the variables below.
   /*
   /* ============================================================= */
-  /* Primary Color
-  ================================================================ */
-  --cd-primary-color: #3fff92;
-  --cd-primary-text-color: #fff;
+  /* Primary Color (blue hydrangea) */
+  /* ============================================================= */
+  --cd-primary-color: #7aa7ff;
+  --cd-primary-text-color: #ffffff;
 
   /* ============================================================= */
-  /* Secondary Color
-  ================================================================ */
-  --cd-secondary-color: #7affb4;
-  --cd-secondary-text-color: #fff;
+  /* Secondary Color (leafy green) */
+  /* ============================================================= */
+  --cd-secondary-color: #6ed6a0;
+  --cd-secondary-text-color: #ffffff;
 
   /* ============================================================= */
-  /* Backgrounds
-  ================================================================ */
-  --cd-body-background-color: #c3f4c5;
-  --cd-content-background-color: #ffd0e4;
-  --cd-faded-background-color: #fff1f1;
+  /* Backgrounds */
+  /* ============================================================= */
+  --cd-body-background-color: #e3f2ff;       /* soft sky blue */
+  --cd-content-background-color: #ffc6de;    /* pastel pink blossom */
+  --cd-faded-background-color: #fff8f9;      /* gentle blush */
 
   /* Background Extras */
-  --cd-body-background-image: url(https://i.pinimg.com/1200x/5e/e7/09/5ee709c895ccef30d9582c6120e78ece.jpg);
+  --cd-body-background-image: url(https://i.pinimg.com/736x/d0/1b/d8/d01bd852b0f6e9fe0d7fdd25e84a97b6.jpg);
 
   /* ============================================================= */
-  /* Text
-  ================================================================ */
-  --cd-body-text-color: #cfffe9;
-  --cd-faded-text-color: #d4fadd;
+  /* Text */
+  /* ============================================================= */
+  --cd-body-text-color: #c74382;   /* deep rosy pink */
+  --cd-faded-text-color: #8fbf9f;  /* muted green accent */
 
   /* ============================================================= */
-  /* Borders
-  ================================================================ */
-  --cd-border-color: rgba(255, 135, 135, 0.285);
+  /* Borders */
+  /* ============================================================= */
+  --cd-border-color: rgba(199, 67, 130, 0.25); /* soft rosy border */
   --cd-border-width: 1px;
   --cd-border-style: solid;
   --cd-border-radius: 1rem;
@@ -51,7 +51,7 @@ body {
   /* ============================================================= */
   /* Navbar
   ================================================================ */
-  --cd-navbar-background-color: #7effc9;
+  --cd-navbar-background-color: #ffa4b2;
   --cd-navbar-brand-color: var(--cd-primary-color);
   --cd-navbar-brand-color-hover: var(--cd-secondary-color);
   --cd-navbar-text-color: var(--cd-content-background-color);
@@ -62,8 +62,8 @@ body {
   /* ============================================================= */
   /* Main Fonts
   ================================================================ */
-  --cd-body-font-family: 'Montserrat', sans-serif;
-  --cd-header-font-family: 'Comfortaa', sans-serif;
+--cd-body-font-family: 'Poppins', sans-serif;   /* clean but friendly */
+--cd-header-font-family: 'Pacifico', cursive;   /* handwritten floral vibes */
   
   /* ============================================================= */
   /* Rarities
@@ -725,17 +725,6 @@ p:last-child {
 }
 
 /* For the hero image in the index */
-.cd-hero-title {
-  color: var(--cd-primary-color);
-  background-color: var(--cd-faded-background-color);
-  border-radius: var(--cd-border-radius);
-  font-family: var(--cd-header-font-family);
-  display: flex;
-  padding: 1.5rem;
-  min-height: 250px;
-  font-weight: 800;
-  font-size: 2.5rem;
-}
 
 @media (min-width: 768px) {
   .cd-hero-title {
