@@ -15,7 +15,7 @@ let charadex = {};
 /* Any preview links will still show Charadex's information
 /* ==================================================================== */
 charadex.site = {
-  title: "Charadex",
+  title: "Faenoir",
   url: "https://gummygyaru.github.io/Faenoir/",
   description: `A tool for organizing small ARPGs and species.`
 }
@@ -47,7 +47,7 @@ charadex.sheet = {
     rarity: ['All', 'Common', 'Uncommon', 'Rare', 'Very Rare', 'Legendary'],
     species: ['All', 'Bloomyte', 'Delerian'],
     itemTypes: ['All', 'Currency', 'MYO Slot', 'Pet', 'Trait', 'Misc'],
-    traitTypes: ['All', 'Ears', 'Eyes', 'Body', 'Limbs', 'Tails', 'Misc', 'Mutations']
+    traitTypes: ['All', 'ears', 'halo', 'body', 'horns', 'tails', 'misc', 'mutations', 'plant']
 
   }
 
@@ -510,7 +510,7 @@ charadex.page.index = {
   prompts: {
     ... charadex.page.prompts,
     dexSelector: 'prompt',
-    amount: 3,
+    amount: 2,
   },
 
   staff: {
@@ -522,7 +522,7 @@ charadex.page.index = {
   designs: {
     ... charadex.page.masterlist,
     dexSelector: 'design',
-    amount: 4,
+    amount: 2,
   }
 
 };

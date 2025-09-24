@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   let prompts = await charadex.initialize.page(null, charadex.page.index.prompts, (arr) => {
 
       // Splice the silly little array
-      let sliceAmount = charadex.page.index.prompts.amount || 4;
+      let sliceAmount = charadex.page.index.prompts.amount || 2;
       arr.splice(sliceAmount, arr.length);
 
     }, (data) => {
@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   let designs = await charadex.initialize.page(null, charadex.page.index.designs, (arr) => {
     
     // Splice the silly little array
-    let sliceAmount = charadex.page.index.designs.amount || 6;
+    let sliceAmount = charadex.page.index.designs.amount || 2;
     arr.splice(sliceAmount, arr.length);
 
   });
