@@ -47,7 +47,7 @@ charadex.sheet = {
     rarity: ['All', 'Common', 'Uncommon', 'Rare', 'Very Rare', 'Legendary'],
     species: ['All', 'Bloomyte', 'Delerian'],
     itemTypes: ['All', 'Currency', 'MYO Slot', 'Pet', 'Trait', 'Misc'],
-    traitTypes: ['All', 'ears', 'halo', 'body', 'horns', 'tails', 'misc', 'mutations', 'plant']
+    traitTypes: ['All', 'ears', 'halo', 'body', 'horns', 'tail', 'misc', 'mutations', 'plant', 'essence']
 
   }
 
