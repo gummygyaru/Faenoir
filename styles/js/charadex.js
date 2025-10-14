@@ -37,19 +37,31 @@ charadex.initialize.page = async (dataArr, config, dataCallback, listCallback, c
     charadex.tools.addProfileLinks(entry, pageUrl, config.profileProperty); // Go ahead and add profile keys just in case
     if (folders) folders(entry, config.fauxFolder.folderProperty); // If folders, add folder info
     if (entry.rarity) entry.raritybadge = `<span class="badge badge-${charadex.tools.scrub(entry.rarity)}">${entry.rarity}</span>`; // Adds a rarity badge
-        if (entry.owner) {const inventoriesUrl = charadex.url.getPageUrl("inventories");entry.ownerlink = `${inventoriesUrl}?profile=${encodeURIComponent(entry.owner)}`;} // Link to owner inventory
-        if (entry.designer) {entry.designerlink = `https://toyhou.se/${charadex.tools.scrub(entry.designer)}`;} // Link to designter toyhouse
-        if (entry.artist) {entry.artistlink = `https://toyhou.se/${charadex.tools.scrub(entry.artist)}`;} // Link to artist toyhouse
-        // Traits
-        if (entry.trait)   {const traitsUrl = charadex.url.getPageUrl("traits");const traitForLink = entry.ears.toLowerCase().replace(/\s+/g, '');entry.earslink   = `${traitsUrl}?profile=${traitForLink}`;} // Link to ears trait
-        if (entry.halo)   {const traitsUrl = charadex.url.getPageUrl("traits");const traitForLink = entry.halo.toLowerCase().replace(/\s+/g, '');entry.halolink   = `${traitsUrl}?profile=${traitForLink}`;} // Link to halo trait
-        if (entry.body)   {const traitsUrl = charadex.url.getPageUrl("traits");const traitForLink = entry.body.toLowerCase().replace(/\s+/g, '');entry.bodylink   = `${traitsUrl}?profile=${traitForLink}`;} // Link to body trait
-        if (entry.horns)  {const traitsUrl = charadex.url.getPageUrl("traits");const traitForLink = entry.horns.toLowerCase().replace(/\s+/g, '');entry.hornslink  = `${traitsUrl}?profile=${traitForLink}`;} // Link to horns trait
-        if (entry.tail)  {const traitsUrl = charadex.url.getPageUrl("traits");const traitForLink = entry.tail.toLowerCase().replace(/\s+/g, '');entry.taillink  = `${traitsUrl}?profile=${traitForLink}`;} // Link to tail trait
-        if (entry.misc)   {const traitsUrl = charadex.url.getPageUrl("traits");const traitForLink = entry.misc.toLowerCase().replace(/\s+/g, '');entry.misclink   = `${traitsUrl}?profile=${traitForLink}`;} // Link to misc trait
-        if (entry.mutations) {const traitsUrl = charadex.url.getPageUrl("traits");const traitForLink = entry.mutations.toLowerCase().replace(/\s+/g, '');entry.mutationslink = `${traitsUrl}?profile=${traitForLink}`;} // Link to mutations trait
-        if (entry.plant)  {const traitsUrl = charadex.url.getPageUrl("traits");const traitForLink = entry.plant.toLowerCase().replace(/\s+/g, '');entry.plantlink  = `${traitsUrl}?profile=${traitForLink}`;} // Link to plant trait
-        if (entry.essence)  {const traitsUrl = charadex.url.getPageUrl("traits");const traitForLink = entry.essence.toLowerCase().replace(/\s+/g, '');entry.essencelink  = `${traitsUrl}?profile=${traitForLink}`;} // Link to plant trait
+    if (entry.owner) {const inventoriesUrl = charadex.url.getPageUrl("inventories");entry.ownerlink = `${inventoriesUrl}?profile=${encodeURIComponent(entry.owner)}`;} // Link to owner inventory
+    if (entry.designer) {entry.designerlink = `https://toyhou.se/${charadex.tools.scrub(entry.designer)}`;} // Link to designter toyhouse
+    if (entry.artist) {entry.artistlink = `https://toyhou.se/${charadex.tools.scrub(entry.artist)}`;} // Link to artist toyhouse
+    // ==========================
+    // Trait linking (multi-trait support)
+    // ==========================
+    const traitsUrl = charadex.url.getPageUrl("traits");
+    const traitTypes = config.traitTypes || [
+      'ears','halo','body','horns','tail','misc','mutations','plant','essence'
+    ];
+    traitTypes.forEach(traitType => {
+      const value = entry[traitType];
+      if (!value) return;
+
+      const traits = value.split(',').map(t => t.trim()).filter(Boolean);
+
+      const htmlLinks = traits.map(trait => {
+        const clean = charadex.tools.scrub(trait);
+        const link = `${traitsUrl}?profile=${clean}`;
+        return `<a href="${link}" target="_blank">${trait}</a>`;
+      });
+
+      // avoids 'link' to not be turned into href
+      entry[`${traitType}lnk`] = htmlLinks.join(' + ');
+    });
   }
 
   // If there's related data, add it
