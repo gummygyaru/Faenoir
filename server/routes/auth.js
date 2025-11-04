@@ -1,80 +1,85 @@
-const express = require('express');
-const router = express.Router();
-const axios = require('axios');
+import express from "express";
+import axios from "axios";
 
+const router = express.Router();
+
+// Environment variables
 const {
-  TOYHOUSE_CLIENT_ID,
-  TOYHOUSE_CLIENT_SECRET,
-  TOYHOUSE_AUTH_URL,
-  TOYHOUSE_TOKEN_URL,
-  TOYHOUSE_USERINFO_URL,
+  TOYHOU_CLIENT_ID,
+  TOYHOU_CLIENT_SECRET,
+  TOYHOU_AUTH_URL,
+  TOYHOU_TOKEN_URL,
+  TOYHOU_USERINFO_URL,
   BACKEND_BASE_URL,
-  FRONTEND_ORIGIN
+  FRONTEND_ORIGIN,
+  NODE_ENV
 } = process.env;
 
-// start auth: redirect user to Toyhou's authorize endpoint
-router.get('/toyhou', (req, res) => {
-  const redirect_uri = `${BACKEND_BASE_URL}/auth/callback/toyhou`;
-  // standard OAuth2 query: response_type=code
+// Helper: get redirect URI (switches between local and production)
+const getRedirectURI = () => {
+  return `${BACKEND_BASE_URL || (NODE_ENV !== "production" ? `http://localhost:4000` : "")}/auth/callback/toyhou`;
+};
+
+// 1️⃣ Start auth: redirect user to Toyhou's authorize endpoint
+router.get("/toyhou", (req, res) => {
+  const redirect_uri = getRedirectURI();
+
   const params = new URLSearchParams({
-    client_id: TOYHOUSE_CLIENT_ID,
+    client_id: TOYHOU_CLIENT_ID,
     redirect_uri,
-    response_type: 'code',
-    // scope: add if Toyhou requires scopes; else remove
-    // scope: 'basic',
-    state: 'faenoir-optional-csrf' // production: generate per-session random state
+    response_type: "code",
+    state: "faenoir-optional-csrf", // TODO: generate per-session random state in prod
   }).toString();
 
-  res.redirect(`${TOYHOUSE_AUTH_URL}?${params}`);
+  res.redirect(`${TOYHOU_AUTH_URL}?${params}`);
 });
 
-// callback: Toyhou redirects here with ?code=...
-router.get('/callback/toyhou', async (req, res) => {
+// 2️⃣ Callback: Toyhou redirects here with ?code=...
+router.get("/callback/toyhou", async (req, res) => {
   const code = req.query.code;
-  if (!code) return res.status(400).send('Missing code');
+  if (!code) return res.status(400).send("Missing code");
 
   try {
-    // exchange code for access token - standard OAuth2 token request
-    const tokenResp = await axios.post(TOYHOUSE_TOKEN_URL, new URLSearchParams({
-      client_id: TOYHOUSE_CLIENT_ID,
-      client_secret: TOYHOUSE_CLIENT_SECRET,
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: `${BACKEND_BASE_URL}/auth/callback/toyhou`
-    }).toString(), {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-    });
+    // Exchange code for access token
+    const tokenResp = await axios.post(
+      TOYHOU_TOKEN_URL,
+      new URLSearchParams({
+        client_id: TOYHOU_CLIENT_ID,
+        client_secret: TOYHOU_CLIENT_SECRET,
+        grant_type: "authorization_code",
+        code,
+        redirect_uri: getRedirectURI(),
+      }).toString(),
+      { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+    );
 
     const tokenData = tokenResp.data;
 
-    // tokenData may contain access_token and maybe user info.
-    // If Toyhou provides a userinfo endpoint, call it:
+    // Fetch user info if endpoint available
     let userInfo = null;
-    if (TOYHOUSE_USERINFO_URL && tokenData.access_token) {
-      const u = await axios.get(TOYHOUSE_USERINFO_URL, {
-        headers: { Authorization: `Bearer ${tokenData.access_token}` }
+    if (TOYHOU_USERINFO_URL && tokenData.access_token) {
+      const userResp = await axios.get(TOYHOU_USERINFO_URL, {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` },
       });
-      userInfo = u.data;
+      userInfo = userResp.data;
     } else {
-      // fallback: some OAuth servers return identifying fields in token response
       userInfo = tokenData.user || tokenData;
     }
 
-    // Save minimal session (example)
+    // Save minimal session (or cookie if preferred)
+    req.session = req.session || {};
     req.session.toyhou = {
       access_token: tokenData.access_token,
       refresh_token: tokenData.refresh_token,
-      user: userInfo
+      user: userInfo,
     };
 
-    // Redirect back to your frontend. You can choose to send an opaque session id instead.
-    // Avoid stuffing access tokens into query strings in production.
-    res.redirect(`${FRONTEND_ORIGIN}/?toyhou_callback=success`);
+    // Redirect back to frontend safely
+    res.redirect(`${FRONTEND_ORIGIN || "http://localhost:4000"}/?toyhou_callback=success`);
   } catch (err) {
-    console.error('Token exchange error', err.response ? err.response.data : err.message);
-    return res.redirect(`${FRONTEND_ORIGIN}/?toyhou_callback=error`);
+    console.error("Token exchange error:", err.response ? err.response.data : err.message);
+    res.redirect(`${FRONTEND_ORIGIN || "http://localhost:4000"}/?toyhou_callback=error`);
   }
 });
 
-module.exports = router;
-
+export default router;
