@@ -1,11 +1,15 @@
-const express = require('express');
+import express from "express";
+
 const router = express.Router();
 
-router.get('/', (req, res) => {
-  if (!req.session || !req.session.toyhou) return res.status(401).json({ error: 'not authenticated' });
-  // DO NOT return access_token to browser in production unless necessary.
+// /me endpoint to get logged-in user
+router.get("/", (req, res) => {
+  if (!req.session || !req.session.toyhou) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  // Return only user info — never send access_token to browser in production
   res.json({ user: req.session.toyhou.user });
 });
 
-module.exports = router;
-
+export default router;
