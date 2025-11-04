@@ -1,23 +1,20 @@
 {
-  "name": "faenoir-toyhou-auth",
+  "name": "faenoir-auth",
   "version": "1.0.0",
-  "type": "module",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js"
   },
   "dependencies": {
     "axios": "^1.5.0",
-    "cookie-session": "^2.0.0",
     "cookie-parser": "^1.4.6",
-    "dotenv": "^16.0.0",
-    "express": "^4.18.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {
-    "nodemon": "^2.0.0"
+    "nodemon": "^2.0.22"
   }
 }
-
-
