@@ -17,7 +17,8 @@ const {
 
 // Helper: get redirect URI (switches between local and production)
 const getRedirectURI = () => {
-  return `${BACKEND_BASE_URL || (NODE_ENV !== "production" ? `http://localhost:4000` : "")}/auth/callback/toyhou`;
+  // Matches the route your backend listens on
+  return `${BACKEND_BASE_URL || (NODE_ENV !== "production" ? "http://localhost:4000" : "")}/auth/toyhou/callback`;
 };
 
 // 1️⃣ Start auth: redirect user to Toyhou's authorize endpoint
@@ -28,14 +29,14 @@ router.get("/toyhou", (req, res) => {
     client_id: TOYHOU_CLIENT_ID,
     redirect_uri,
     response_type: "code",
-    state: "faenoir-optional-csrf", // TODO: generate per-session random state in prod
+    state: "faenoir-optional-csrf", // TODO: generate per-session random state in production
   }).toString();
 
   res.redirect(`${TOYHOU_AUTH_URL}?${params}`);
 });
 
 // 2️⃣ Callback: Toyhou redirects here with ?code=...
-router.get("/callback/toyhou", async (req, res) => {
+router.get("/toyhou/callback", async (req, res) => {
   const code = req.query.code;
   if (!code) return res.status(400).send("Missing code");
 
