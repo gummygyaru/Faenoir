@@ -7,9 +7,9 @@ const router = express.Router();
 const {
   TOYHOU_CLIENT_ID,
   TOYHOU_CLIENT_SECRET,
-  TOYHOU_AUTH_URL,
-  TOYHOU_TOKEN_URL,
-  TOYHOU_USERINFO_URL,
+  TOYHOU_AUTH_URL,      // should be https://toyhou.se/~oauth/authorize
+  TOYHOU_TOKEN_URL,     // should be https://toyhou.se/~oauth/token
+  TOYHOU_USERINFO_URL,  // https://toyhou.se/~api/v1/me
   BACKEND_BASE_URL,
   FRONTEND_ORIGIN,
   NODE_ENV
@@ -17,8 +17,8 @@ const {
 
 // Helper: get redirect URI (switches between local and production)
 const getRedirectURI = () => {
-  // Matches the route your backend listens on
-  return `${BACKEND_BASE_URL || (NODE_ENV !== "production" ? "http://localhost:4000" : "")}/auth/toyhou/callback`;
+  const base = BACKEND_BASE_URL || (NODE_ENV !== "production" ? "http://localhost:4000" : "");
+  return `${base}/auth/toyhou/callback`;
 };
 
 // 1️⃣ Start auth: redirect user to Toyhou's authorize endpoint
@@ -45,9 +45,9 @@ router.get("/toyhou/callback", async (req, res) => {
     const tokenResp = await axios.post(
       TOYHOU_TOKEN_URL,
       new URLSearchParams({
+        grant_type: "authorization_code",
         client_id: TOYHOU_CLIENT_ID,
         client_secret: TOYHOU_CLIENT_SECRET,
-        grant_type: "authorization_code",
         code,
         redirect_uri: getRedirectURI(),
       }).toString(),
