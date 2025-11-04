@@ -66,13 +66,49 @@
         </li>
 
         <!-- Log in button -->
-        <li class="nav-item ml-3">
+        <li class="nav-item ml-3" id="login-btn">
           <a href="https://faenoir-auth.onrender.com/auth/toyhou" class="btn btn-primary">
             Log in with Toyhou.se
           </a>
+        </li>
+
+        <!-- Logged-in user info (hidden by default) -->
+        <li class="nav-item ml-3 d-none" id="user-info">
+          <img id="user-avatar" src="" alt="Avatar" class="rounded-circle mr-2" style="height:30px;width:30px;">
+          <span id="user-name" class="text-light"></span>
         </li>
 
       </ul>
     </div>
   </div>
 </nav>
+
+<script>
+async function checkLogin() {
+  try {
+    const resp = await fetch('https://faenoir-auth.onrender.com/me', {
+      credentials: 'include'
+    });
+    if (!resp.ok) return; // user not logged in
+
+    const data = await resp.json();
+    const user = data.user;
+
+    // Hide login button
+    document.getElementById('login-btn').classList.add('d-none');
+
+    // Show user info
+    const userInfo = document.getElementById('user-info');
+    userInfo.classList.remove('d-none');
+
+    // Update avatar and username
+    document.getElementById('user-avatar').src = user.avatar_url || 'default-avatar.png';
+    document.getElementById('user-name').textContent = user.username || 'Toyhou User';
+  } catch (err) {
+    console.log('Not logged in', err);
+  }
+}
+
+// Run on page load
+checkLogin();
+</script>
