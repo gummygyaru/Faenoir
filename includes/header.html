@@ -65,17 +65,23 @@
           </div>
         </li>
 
-        <!-- Log in button -->
+        <!-- Login -->
         <li class="nav-item ml-3" id="login-btn">
-          <a href="https://faenoir-auth.onrender.com/auth/toyhou" class="btn btn-primary">
-            Log in with Toyhou.se
-          </a>
+          <select id="user-select" class="form-control">
+            <option value="">Select your username</option>
+            <option value="User1">User1</option>
+            <option value="User2">User2</option>
+            <option value="User3">User3</option>
+            <!-- Add more Charadex usernames here -->
+          </select>
+          <button id="login-submit" class="btn btn-primary mt-1">Sign In</button>
         </li>
 
-        <!-- Logged-in user info (hidden by default) -->
+        <!-- Logged-in user info -->
         <li class="nav-item ml-3 d-none" id="user-info">
           <img id="user-avatar" src="" alt="Avatar" class="rounded-circle mr-2" style="height:30px;width:30px;">
           <span id="user-name" class="text-light"></span>
+          <button id="logout-btn" class="btn btn-secondary btn-sm ml-2">Sign Out</button>
         </li>
 
       </ul>
@@ -84,30 +90,63 @@
 </nav>
 
 <script>
-async function checkLogin() {
-  try {
-    const resp = await fetch('https://faenoir-auth.onrender.com/me', {
-      credentials: 'include'
-    });
-    if (!resp.ok) return; // user not logged in
+const LOGIN_KEY = 'faenoir_user';
 
-    const data = await resp.json();
-    const user = data.user;
+// Dummy avatar mapping
+const AVATARS = {
+  "User1": "https://example.com/avatar1.png",
+  "User2": "https://example.com/avatar2.png",
+  "User3": "https://example.com/avatar3.png"
+};
 
-    // Hide login button
-    document.getElementById('login-btn').classList.add('d-none');
+// Check for existing session on page load
+function checkLogin() {
+  const session = JSON.parse(localStorage.getItem(LOGIN_KEY));
+  if (!session) return;
 
-    // Show user info
-    const userInfo = document.getElementById('user-info');
-    userInfo.classList.remove('d-none');
-
-    // Update avatar and username
-    document.getElementById('user-avatar').src = user.avatar_url || 'default-avatar.png';
-    document.getElementById('user-name').textContent = user.username || 'Toyhou.se User';
-  } catch (err) {
-    console.log('Not logged in', err);
+  const now = new Date().getTime();
+  if (now - session.timestamp > 24 * 60 * 60 * 1000) {
+    // Session expired
+    localStorage.removeItem(LOGIN_KEY);
+    return;
   }
+
+  showUser(session.username);
 }
+
+// Show user info in navbar
+function showUser(username) {
+  document.getElementById('login-btn').classList.add('d-none');
+  const userInfo = document.getElementById('user-info');
+  userInfo.classList.remove('d-none');
+
+  document.getElementById('user-avatar').src = AVATARS[username] || 'default-avatar.png';
+  document.getElementById('user-name').textContent = username;
+}
+
+// Sign in
+function signIn() {
+  const username = document.getElementById('user-select').value;
+  if (!username) return alert("Please select a username.");
+
+  const session = {
+    username,
+    timestamp: new Date().getTime()
+  };
+  localStorage.setItem(LOGIN_KEY, JSON.stringify(session));
+  showUser(username);
+}
+
+// Logout
+function logout() {
+  localStorage.removeItem(LOGIN_KEY);
+  document.getElementById('user-info').classList.add('d-none');
+  document.getElementById('login-btn').classList.remove('d-none');
+}
+
+// Event listeners
+document.getElementById('login-submit').addEventListener('click', signIn);
+document.getElementById('logout-btn').addEventListener('click', logout);
 
 // Run on page load
 checkLogin();
