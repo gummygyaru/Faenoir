@@ -103,7 +103,7 @@ async function checkLogin() {
 
     // Update avatar and username
     document.getElementById('user-avatar').src = user.avatar_url || 'default-avatar.png';
-    document.getElementById('user-name').textContent = user.username || 'Toyhou User';
+    document.getElementById('user-name').textContent = user.username || 'Toyhou.se User';
   } catch (err) {
     console.log('Not logged in', err);
   }
