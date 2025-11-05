@@ -80,7 +80,7 @@ async function signIn() {
 function showUser(username) {
   $('#login-btn').addClass('d-none');
   $('#user-info').removeClass('d-none');
-  $('#user-avatar').attr('src', AVATARS[username] || '../assets/default-avatar.png');
+  $('#user-avatar').attr('src', AVATARS[username] || 'assets/default-avatar.png');
   $('#user-name').text(username);
 }
 
