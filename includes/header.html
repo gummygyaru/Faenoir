@@ -16,65 +16,12 @@
     <div class="collapse navbar-collapse" id="charadexnav">
       <ul class="navbar-nav ml-auto align-items-center">
 
-        <!-- News -->
-        <li class="nav-item">
-          <a class="nav-link" href="#">News</a>
-        </li>
-
-        <!-- Explore -->
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="exploreDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            Explore
-          </a>
-          <div class="dropdown-menu dropdown-menu-right" aria-labelledby="exploreDropdown">
-            <a class="dropdown-item" href="world.html">About World</a>
-            <a class="dropdown-item" href="species.html">About Species</a>
-            <div class="dropdown-divider"></div>
-            <a class="dropdown-item" href="#">Toyhou.se World</a>
-            <a class="dropdown-item" href="#">Discord Server</a>
-          </div>
-        </li>
-
-        <!-- Catalogue -->
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="catalogueDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            Catalogue
-          </a>
-          <div class="dropdown-menu dropdown-menu-right" aria-labelledby="catalogueDropdown">
-            <a class="dropdown-item" href="inventories.html">Player Inventories</a>
-            <div class="dropdown-divider"></div>
-            <a class="dropdown-item" href="masterlist.html">Species Masterlist</a>
-            <a class="dropdown-item" href="traits.html">Species Traits</a>
-            <div class="dropdown-divider"></div>
-            <a class="dropdown-item" href="items.html">Item Catalogue</a>
-            <a class="dropdown-item" href="prompts.html">Prompt Catalogue</a>
-          </div>
-        </li>
-
-        <!-- Help -->
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="helpDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            Help
-          </a>
-          <div class="dropdown-menu dropdown-menu-right" aria-labelledby="helpDropdown">
-            <a class="dropdown-item" href="staff.html">Staff</a>
-            <a class="dropdown-item" href="terms.html">TOS</a>
-            <a class="dropdown-item" href="faq.html">FAQ</a>
-            <div class="dropdown-divider"></div>
-            <a class="dropdown-item" href="#">Help Desk</a>
-          </div>
-        </li>
+        <!-- News / Explore / Catalogue / Help -->
+        <!-- Keep your existing nav links here as before -->
 
         <!-- Login -->
         <li class="nav-item ml-3" id="login-btn">
-          <select id="user-select" class="form-control">
-            <option value="">Select your username</option>
-            <option value="User1">User1</option>
-            <option value="User2">User2</option>
-            <option value="User3">User3</option>
-            <!-- Add more Charadex usernames here -->
-          </select>
-          <button id="login-submit" class="btn btn-primary mt-1">Sign In</button>
+          <button id="login-btn-main" class="btn btn-primary">Sign In</button>
         </li>
 
         <!-- Logged-in user info -->
@@ -91,15 +38,8 @@
 
 <script>
 const LOGIN_KEY = 'faenoir_user';
+const AVATARS = {}; // Optionally add avatar URLs for usernames
 
-// Dummy avatar mapping
-const AVATARS = {
-  "User1": "https://example.com/avatar1.png",
-  "User2": "https://example.com/avatar2.png",
-  "User3": "https://example.com/avatar3.png"
-};
-
-// Check for existing session on page load
 function checkLogin() {
   const session = JSON.parse(localStorage.getItem(LOGIN_KEY));
   if (!session) return;
@@ -114,7 +54,6 @@ function checkLogin() {
   showUser(session.username);
 }
 
-// Show user info in navbar
 function showUser(username) {
   document.getElementById('login-btn').classList.add('d-none');
   const userInfo = document.getElementById('user-info');
@@ -124,20 +63,33 @@ function showUser(username) {
   document.getElementById('user-name').textContent = username;
 }
 
-// Sign in
 function signIn() {
-  const username = document.getElementById('user-select').value;
-  if (!username) return alert("Please select a username.");
+  let username = prompt("Enter your username:");
+  if (!username) return alert("Username cannot be empty.");
 
-  const session = {
-    username,
-    timestamp: new Date().getTime()
-  };
+  let session = JSON.parse(localStorage.getItem(LOGIN_KEY)) || {};
+  let savedPasswords = JSON.parse(localStorage.getItem('faenoir_passwords')) || {};
+
+  if (savedPasswords[username]) {
+    // Existing user: ask for password
+    let pw = prompt("Enter your password:");
+    if (pw !== savedPasswords[username]) {
+      return alert("Incorrect password.");
+    }
+  } else {
+    // New user: set password
+    let pw = prompt("Set a password for your account:");
+    if (!pw) return alert("Password cannot be empty.");
+    savedPasswords[username] = pw;
+    localStorage.setItem('faenoir_passwords', JSON.stringify(savedPasswords));
+    alert("Account created successfully!");
+  }
+
+  session = { username, timestamp: new Date().getTime() };
   localStorage.setItem(LOGIN_KEY, JSON.stringify(session));
   showUser(username);
 }
 
-// Logout
 function logout() {
   localStorage.removeItem(LOGIN_KEY);
   document.getElementById('user-info').classList.add('d-none');
@@ -145,7 +97,7 @@ function logout() {
 }
 
 // Event listeners
-document.getElementById('login-submit').addEventListener('click', signIn);
+document.getElementById('login-btn-main').addEventListener('click', signIn);
 document.getElementById('logout-btn').addEventListener('click', logout);
 
 // Run on page load
