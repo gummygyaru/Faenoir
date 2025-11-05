@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
   charadex.tools.updateMeta();
   charadex.tools.loadPage('#charadex-body', 100);
 });
-
+// ========== LOGIN SYSTEM ==========
 const LOGIN_KEY = 'faenoir_user';
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycbx5f4V1TjMagGoZkb_6cHHuXrEWWE8xgBkv1Q19JS8Am7mjgwfgbE1HZaM89YipmzrteA/exec';
 const AVATARS = {};
@@ -78,21 +78,19 @@ async function signIn() {
 
 // Show user info in navbar
 function showUser(username) {
-  document.getElementById('login-btn').classList.add('d-none');
-  const userInfo = document.getElementById('user-info');
-  userInfo.classList.remove('d-none');
-  document.getElementById('user-avatar').src = AVATARS[username] || '../assets/default-avatar.png';
-  document.getElementById('user-name').textContent = username;
+  $('#login-btn').addClass('d-none');
+  $('#user-info').removeClass('d-none');
+  $('#user-avatar').attr('src', AVATARS[username] || '../assets/default-avatar.png');
+  $('#user-name').text(username);
 }
 
 // Logout
 function logout() {
   const session = JSON.parse(localStorage.getItem(LOGIN_KEY));
   if (session) logToSheet(session.username, 'Sign Out');
-
   localStorage.removeItem(LOGIN_KEY);
-  document.getElementById('user-info').classList.add('d-none');
-  document.getElementById('login-btn').classList.remove('d-none');
+  $('#user-info').addClass('d-none');
+  $('#login-btn').removeClass('d-none');
 }
 
 // Log to Google Sheet
@@ -101,9 +99,10 @@ function logToSheet(username, action) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, action })
-  }).then(res => res.json())
-    .then(data => console.log('Sheet updated', data))
-    .catch(err => console.error('Sheet update error', err));
+  })
+  .then(res => res.json())
+  .then(data => console.log('Sheet updated', data))
+  .catch(err => console.error('Sheet update error', err));
 }
 
 // Check session on page load
@@ -112,7 +111,7 @@ function checkLogin() {
   if (!session) return;
 
   const now = new Date().getTime();
-  if (now - session.timestamp > 24*60*60*1000) {
+  if (now - session.timestamp > 24 * 60 * 60 * 1000) {
     localStorage.removeItem(LOGIN_KEY);
     return;
   }
@@ -120,9 +119,21 @@ function checkLogin() {
   showUser(session.username);
 }
 
-// Event listeners
-document.getElementById('login-submit').addEventListener('click', signIn);
-document.getElementById('logout-btn').addEventListener('click', logout);
+// Wait for header to finish loading before attaching listeners
+function initLoginButtons() {
+  // use delegated event handlers so buttons can appear later
+  $(document).off('click.faenoirLogin'); // prevent duplicate bindings
+  $(document).on('click.faenoirLogin', '#login-submit', signIn);
+  $(document).on('click.faenoirLogin', '#logout-btn', logout);
+}
 
-// Run on page load
-checkLogin();
+// Observe when header gets injected
+const headerObserver = new MutationObserver(() => {
+  if ($('#login-btn').length && $('#logout-btn').length) {
+    initLoginButtons();
+    checkLogin();
+    headerObserver.disconnect();
+  }
+});
+
+headerObserver.observe(document.body, { childList: true, subtree: true });
