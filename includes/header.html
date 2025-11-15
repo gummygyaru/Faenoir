@@ -7,12 +7,12 @@
       Faenoir
     </a>
 
-    <!-- Toggle -->
+    <!-- Mobile Toggle -->
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#charadexnav" aria-controls="charadexnav" aria-expanded="false" aria-label="Toggle navigation">
       <i class="fa-solid fa-bars"></i>
     </button>
 
-    <!-- Links -->
+    <!-- Nav Links -->
     <div class="collapse navbar-collapse" id="charadexnav">
       <ul class="navbar-nav ml-auto align-items-center">
 
@@ -65,7 +65,7 @@
 
         <!-- Login -->
         <li class="nav-item ml-3" id="login-btn">
-          <button id="login-submit" class="btn btn-primary">Sign In</button>
+          <button class="btn btn-primary" id="open-login-modal">Sign In</button>
         </li>
 
         <!-- Logged-in user info -->
@@ -79,3 +79,34 @@
     </div>
   </div>
 </nav>
+
+<!-- Login Modal -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title" id="loginModalLabel">Sign In</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <div class="modal-body text-center">
+
+        <p class="mb-3">Choose a platform to sign in:</p>
+
+        <button id="discord-login" class="btn btn-primary btn-block mb-2">
+          <i class="fab fa-discord mr-2"></i> Sign in with Discord
+        </button>
+
+        <button id="toyhouse-login" class="btn btn-secondary btn-block">
+          <img src="../Faenoir/assets/toyhouse.png" class="mr-2" style="height:20px;"> 
+          Sign in with Toyhouse
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+</div>
