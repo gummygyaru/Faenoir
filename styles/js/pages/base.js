@@ -1,7 +1,6 @@
 /* ===========================================================================
-   base.js — TRUE Toyhouse OAuth Login (Popup → Token → User → Roles)
+   base.js — Toyhouse-Only Login for Faenoir
    Backend: Google Apps Script (GAS)
-   Author: your beloved pookie chatgpt <3
 =========================================================================== */
 
 import { charadex } from '../utilities.js';
@@ -16,7 +15,7 @@ const LOGIN_HISTORY_KEY = 'faenoir_login_history';
 const GAS_URL =
   "https://script.google.com/macros/s/AKfycbwJSeafkuiUukVYBx44yBVnKgYVhHxF5cAPB1QC5R2IoSldZ-jDSd_GbVOkXNb0-9gm2g/exec";
 
-/* --------------------------- API HELPERS --------------------------- */
+/* --------------------------- GAS HELPERS --------------------------- */
 
 async function gasGET(params = {}) {
   const url = new URL(GAS_URL);
@@ -28,7 +27,7 @@ async function gasGET(params = {}) {
 /* ---------------------- TOYHOUSE LOGIN POPUP ---------------------- */
 
 function startToyhouseLogin() {
-  const authURL = `${GAS_URL}?action=auth`;
+  const authURL = `${GAS_URL}?action=toyhouStart`;
 
   const popup = window.open(
     authURL,
@@ -42,22 +41,16 @@ function startToyhouseLogin() {
   }
 }
 
-/* ======================================================================
-   MESSAGE LISTENER
-   GAS callback sends: { ok: true, token, user }
-====================================================================== */
+/* --------------------------- HANDLE CALLBACK --------------------------- */
 
 window.addEventListener("message", async (event) => {
   const data = event.data;
-
   if (!data || !data.ok || !data.user) return;
 
   const { token, user } = data;
   const session = {
     token,
     username: user.username,
-    id: user.id,
-    avatar: user.avatar_url,
     timestamp: Date.now(),
   };
 
@@ -69,13 +62,15 @@ window.addEventListener("message", async (event) => {
 
   // Load role from GAS
   const roleResp = await gasGET({
-    action: "userinfo",
-    userId: user.id
+    action: "me",
+    token
   });
 
-  if (roleResp && roleResp.role) {
-    session.role = roleResp.role;
+  if (roleResp && roleResp.user) {
+    session.roles = roleResp.user.roles || [];
+    session.avatar = roleResp.user.avatar || user.avatar_url || "";
     localStorage.setItem(LOGIN_KEY, JSON.stringify(session));
+    if (session.avatar) localStorage.setItem(AVATAR_CACHE_KEY, session.avatar);
   }
 
   showUser(session.username);
@@ -88,15 +83,18 @@ function showUser(username) {
   $("#login-btn").addClass("d-none");
   $("#user-info").removeClass("d-none");
 
-  const avatar =
-    localStorage.getItem(AVATAR_CACHE_KEY) ||
-    "assets/default-avatar.png";
+  const avatar = localStorage.getItem(AVATAR_CACHE_KEY) || "assets/default-avatar.png";
 
   $("#user-avatar").attr("src", avatar);
   $("#user-name").text(username);
 }
 
 function logout() {
+  const session = JSON.parse(localStorage.getItem(LOGIN_KEY) || "{}");
+  if (session.username) {
+    gasGET({ action: "log", username: session.username, reason: "logout" });
+  }
+
   localStorage.removeItem(LOGIN_KEY);
   localStorage.removeItem(AVATAR_CACHE_KEY);
 
@@ -106,15 +104,17 @@ function logout() {
 
 /* --------------------------- ROLES --------------------------- */
 
-export function getRole() {
+function getRoles() {
   const session = JSON.parse(localStorage.getItem(LOGIN_KEY) || "{}");
-  return session.role || "user";
+  return session.roles || [];
 }
+
 export function isAdmin() {
-  return getRole() === "admin";
+  return getRoles().includes("admin");
 }
 export function isMod() {
-  return getRole() === "mod" || getRole() === "admin";
+  const roles = getRoles();
+  return roles.includes("mod") || roles.includes("admin");
 }
 
 /* ------------------------ LOGIN HISTORY ------------------------ */
@@ -138,7 +138,6 @@ function checkExistingLogin() {
   const session = JSON.parse(localStorage.getItem(LOGIN_KEY) || "null");
   if (!session) return;
 
-  // auto-expire after 24 hours
   if (Date.now() - session.timestamp > 24 * 60 * 60 * 1000) {
     localStorage.removeItem(LOGIN_KEY);
     return;
@@ -151,7 +150,6 @@ function checkExistingLogin() {
 
 function initButtons() {
   $(document).off("click.faelogin");
-
   $(document).on("click.faelogin", "#login-submit", startToyhouseLogin);
   $(document).on("click.faelogin", "#logout-btn", logout);
 }
@@ -181,7 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 window.faenoir = {
   startToyhouseLogin,
-  getRole,
+  getRoles,
   isAdmin,
   isMod,
   lastLogin
