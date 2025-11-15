@@ -1,185 +1,60 @@
-/* ===========================================================================
-   base.js — Faenoir Toyhouse OAuth Login (Popup → Token → User → Roles)
-=========================================================================== */
+const LOGIN_KEY = "faenoir_user";
+const AVATAR_CACHE_KEY = "faenoir_avatar";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwJSeafkuiUukVYBx44yBVnKgYVhHxF5cAPB1QC5R2IoSldZ-jDSd_GbVOkXNb0-9gm2g/exec";
 
-import { charadex } from '../utilities.js';
-
-/* --------------------------- CONFIG --------------------------- */
-
-const LOGIN_KEY = 'faenoir_user';
-const AVATAR_CACHE_KEY = 'faenoir_avatar';
-const LOGIN_HISTORY_KEY = 'faenoir_login_history';
-
-// Your GAS endpoint (exec)
-const GAS_URL =
-  "https://script.google.com/macros/s/AKfycbwJSeafkuiUukVYBx44yBVnKgYVhHxF5cAPB1QC5R2IoSldZ-jDSd_GbVOkXNb0-9gm2g/exec";
-
-/* --------------------------- GAS HELPERS --------------------------- */
-
-async function gasGET(params = {}) {
-  const url = new URL(GAS_URL);
-  for (const k in params) url.searchParams.set(k, params[k]);
-  const res = await fetch(url);
-  return res.json();
+function startToyhouseLogin() {
+  fetch(GAS_URL + "?action=auth")
+    .then(res => res.json())
+    .then(data => {
+      const popup = window.open(data.url, "toyhouse_login", "width=600,height=700");
+      if (!popup) alert("Please allow pop-ups for Toyhouse login!");
+    });
 }
-
-/* ---------------------- TOYHOUSE LOGIN POPUP ---------------------- */
-
-export function startToyhouseLogin() {
-  const authURL = `${GAS_URL}?action=auth`;
-
-  const popup = window.open(
-    authURL,
-    "th_oauth",
-    "width=600,height=700,left=200,top=100"
-  );
-
-  if (!popup) {
-    alert("Please allow pop-ups for Toyhouse login!");
-    return;
-  }
-}
-
-/* --------------------------- MESSAGE LISTENER --------------------------- */
 
 window.addEventListener("message", async (event) => {
   const data = event.data;
   if (!data || !data.ok || !data.user) return;
 
-  const { token, user } = data;
   const session = {
-    token,
-    username: user.username,
-    id: user.id,
-    avatar: user.avatar_url,
-    timestamp: Date.now(),
+    token: data.token,
+    username: data.user.username,
+    id: data.user.id,
+    avatar: data.user.avatar || "",
+    timestamp: Date.now()
   };
 
   localStorage.setItem(LOGIN_KEY, JSON.stringify(session));
+  if (session.avatar) localStorage.setItem(AVATAR_CACHE_KEY, session.avatar);
 
-  if (user.avatar_url) {
-    localStorage.setItem(AVATAR_CACHE_KEY, user.avatar_url);
-  }
+  // Fetch role
+  const roleResp = await fetch(GAS_URL + "?action=me&userId=" + session.id).then(r => r.json());
+  session.role = roleResp.role || "user";
+  localStorage.setItem(LOGIN_KEY, JSON.stringify(session));
 
-  // Load role from GAS
-  const roleResp = await gasGET({ action: "me", userId: user.id });
-  if (roleResp && roleResp.role) {
-    session.role = roleResp.role;
-    localStorage.setItem(LOGIN_KEY, JSON.stringify(session));
-  }
-
-  showUser(session.username);
-  recordLogin(session.username, "toyhouse");
+  showUser(session.username, session.avatar);
 });
 
-/* --------------------------- UI HANDLERS --------------------------- */
-
-export function showUser(username) {
+function showUser(username, avatar) {
   $("#login-btn").addClass("d-none");
   $("#user-info").removeClass("d-none");
-
-  const avatar =
-    localStorage.getItem(AVATAR_CACHE_KEY) || "assets/default-avatar.png";
-
-  $("#user-avatar").attr("src", avatar);
+  $("#user-avatar").attr("src", avatar || localStorage.getItem(AVATAR_CACHE_KEY) || "assets/default-avatar.png");
   $("#user-name").text(username);
 }
 
-export function logout() {
-  const session = JSON.parse(localStorage.getItem(LOGIN_KEY) || "{}");
-  if (session.username) recordLogin(session.username, "logout");
-
+function logout() {
   localStorage.removeItem(LOGIN_KEY);
   localStorage.removeItem(AVATAR_CACHE_KEY);
-
   $("#user-info").addClass("d-none");
   $("#login-btn").removeClass("d-none");
 }
 
-/* --------------------------- ROLES --------------------------- */
-
-export function getRole() {
-  const session = JSON.parse(localStorage.getItem(LOGIN_KEY) || "{}");
-  return session.role || "user";
-}
-
-export function isAdmin() {
-  return getRole() === "admin";
-}
-
-export function isMod() {
-  return getRole() === "mod" || isAdmin();
-}
-
-/* ------------------------ LOGIN HISTORY ------------------------ */
-
-function recordLogin(username, method) {
-  const now = new Date().toISOString();
-  const history = JSON.parse(localStorage.getItem(LOGIN_HISTORY_KEY) || "[]");
-
-  history.unshift({ user: username, method, ts: now });
-  localStorage.setItem(LOGIN_HISTORY_KEY, JSON.stringify(history.slice(0, 50)));
-}
-
-export function lastLogin() {
-  const history = JSON.parse(localStorage.getItem(LOGIN_HISTORY_KEY) || "[]");
-  return history[0] || null;
-}
-
-/* ---------------------- SESSION CHECK ON LOAD ---------------------- */
-
 function checkExistingLogin() {
   const session = JSON.parse(localStorage.getItem(LOGIN_KEY) || "null");
   if (!session) return;
-
-  // Auto-expire after 24 hours
-  if (Date.now() - session.timestamp > 24 * 60 * 60 * 1000) {
-    localStorage.removeItem(LOGIN_KEY);
-    return;
-  }
-
-  showUser(session.username);
+  if (Date.now() - session.timestamp > 24*60*60*1000) { localStorage.removeItem(LOGIN_KEY); return; }
+  showUser(session.username, session.avatar);
 }
 
-/* ---------------------- INIT BUTTON LOGIC ---------------------- */
-
-function initButtons() {
-  $(document).off("click.faelogin");
-
-  $(document).on("click.faelogin", "#login-submit", startToyhouseLogin);
-  $(document).on("click.faelogin", "#logout-btn", logout);
-}
-
-/* --------------------------- OBSERVE HEADER --------------------------- */
-
-const headerObserver = new MutationObserver(() => {
-  if ($("#login-btn").length && $("#logout-btn").length) {
-    initButtons();
-    checkExistingLogin();
-    headerObserver.disconnect();
-  }
-});
-
-headerObserver.observe(document.body, { childList: true, subtree: true });
-
-/* --------------------------- PAGE INIT --------------------------- */
-
-document.addEventListener("DOMContentLoaded", () => {
-  charadex.tools.loadIncludedFiles();
-  charadex.tools.updateMeta();
-  charadex.tools.loadPage("#charadex-body", 100);
-
-  initButtons();
-  checkExistingLogin();
-});
-
-// Expose for global usage
-window.faenoir = {
-  startToyhouseLogin,
-  showUser,
-  logout,
-  getRole,
-  isAdmin,
-  isMod,
-  lastLogin
-};
+$(document).on("click", "#toyhouse-login", startToyhouseLogin);
+$(document).on("click", "#logout-btn", logout);
+$(document).ready(checkExistingLogin);
