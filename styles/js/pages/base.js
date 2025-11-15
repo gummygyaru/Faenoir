@@ -1,117 +1,171 @@
-/* ==================================================================== */
-/* Import Utilities
-======================================================================= */
+/* ===========================================================================
+   base.js — Toyhouse-Only Login for Faenoir
+   Backend: Google Apps Script (GAS)
+   Flow:
+   1) User clicks “Sign in with Toyhouse”
+   2) GAS generates a verification code & HTML instructions
+   3) User pastes code into Toyhouse profile
+   4) GAS verifies the link & redirects back with ?token & ?user
+   5) This script stores session + loads avatar + roles
+=========================================================================== */
+
 import { charadex } from '../utilities.js';
 
-/* ==================================================================== */
-/* CONFIG
-======================================================================= */
+/* --------------------------- CONFIG --------------------------- */
+
 const LOGIN_KEY = 'faenoir_user';
-const SHEET_URL = 'https://script.google.com/macros/s/AKfycbx5f4V1TjMagGoZkb_6cHHuXrEWWE8xgBkv1Q19JS8Am7mjgwfgbE1HZaM89YipmzrteA/exec';
-const AVATARS = {}; // optional username→image map
+const AVATAR_CACHE_KEY = 'faenoir_avatar';
+const LOGIN_HISTORY_KEY = 'faenoir_login_history';
 
+// YOUR GOOGLE APPS SCRIPT WEB APP URL:
+const GAS_URL =
+  "https://script.google.com/macros/s/AKfycbwJSeafkuiUukVYBx44yBVnKgYVhHxF5cAPB1QC5R2IoSldZ-jDSd_GbVOkXNb0-9gm2g/exec";
 
-/* ==================================================================== */
-/* TOYHOUSE LOGIN (REDIRECT + CALLBACK SIMULATION)
-======================================================================= */
+/* --------------------------- GAS HELPERS --------------------------- */
 
-// User clicks "Sign in with Toyhouse"
-function startToyhouLogin() {
-  const callback = encodeURIComponent(
-    window.location.origin + window.location.pathname + '?toyhou_callback=success'
-  );
-
-  // Redirect to Toyhouse’s login page (this works with any TH user)
-  window.location.href = `https://toyhou.se/~login?redirect=${callback}`;
+async function gasGet(params = {}) {
+  const url = new URL(GAS_URL);
+  for (const k in params) url.searchParams.set(k, params[k]);
+  const res = await fetch(url);
+  return res.json();
 }
 
+async function gasPost(body = {}) {
+  const res = await fetch(GAS_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  return res.json();
+}
 
-// When Toyhouse sends them back here:
-function handleToyhouCallback() {
+/* ---------------------- TOYHOUSE LOGIN FLOW ---------------------- */
+
+/** Opens the GAS Toyhouse verification page */
+function startToyhouseLogin() {
+  window.open(GAS_URL + "?action=toyhouStart", "_blank");
+  alert(
+    "A new tab has opened with Toyhouse verification instructions.\n" +
+    "Paste the provided code into your Toyhouse profile,\nthen complete the form on that page.\n\n" +
+    "Once verified, you'll be automatically redirected back here ❤️"
+  );
+}
+
+/** Handles ?token= & ?user= returned by GAS */
+function handleAuthRedirect() {
   const url = new URL(window.location.href);
-  if (url.searchParams.get('toyhou_callback') !== 'success') return;
 
-  console.log('Toyhouse login detected');
+  const token = url.searchParams.get("token");
+  const username = url.searchParams.get("user");
 
-  // Toyhouse does NOT give us the username; user enters it once
-  let username = url.searchParams.get('user');
-  if (!username) {
-    username = prompt("Enter your Toyhouse username:");
-    if (!username) return alert("Toyhouse login cancelled.");
-  }
+  if (!token) return; // nothing to do
 
   const session = {
+    token,
     username,
-    toyhou: true,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   };
 
   localStorage.setItem(LOGIN_KEY, JSON.stringify(session));
 
-  showUser(username);
-  logToSheet(username, "Toyhouse Login");
+  // Pull avatar & roles from GAS
+  gasGet({ action: "me", token })
+    .then((resp) => {
+      if (resp.status === "success" && resp.user) {
+        session.username = resp.user.username;
+        session.roles = resp.user.roles || [];
+        session.avatar = resp.user.avatar;
 
-  // Remove callback from URL
+        localStorage.setItem(LOGIN_KEY, JSON.stringify(session));
+
+        if (session.avatar)
+          localStorage.setItem(AVATAR_CACHE_KEY, session.avatar);
+
+        showUser(session.username);
+        recordLogin(session.username, "toyhouse");
+      } else {
+        // fallback: at least log them in visually
+        showUser(username || "Unknown User");
+        recordLogin(username || "Unknown User", "toyhouse");
+      }
+    })
+    .catch((e) => {
+      console.error("Error loading user info:", e);
+      showUser(username || "User");
+    });
+
+  // Clean up the URL
   history.replaceState({}, document.title, window.location.pathname);
 }
 
+/* --------------------------- UI HANDLERS --------------------------- */
 
-/* ==================================================================== */
-/* DEFAULT FRONTEND LOGIN (LocalStorage)
-======================================================================= */
+/** Display logged-in user in the header */
+function showUser(username) {
+  $("#login-btn").addClass("d-none");
+  $("#user-info").removeClass("d-none");
 
-async function signIn() {
-  const username = prompt("Enter your username:");
-  if (!username) return alert("Username cannot be empty.");
+  const avatar =
+    localStorage.getItem(AVATAR_CACHE_KEY) || "assets/default-avatar.png";
 
-  let passwords = JSON.parse(localStorage.getItem('faenoir_passwords')) || {};
+  $("#user-avatar").attr("src", avatar);
+  $("#user-name").text(username);
+}
 
-  if (passwords[username]) {
-    // existing user login
-    const pw = prompt("Enter your password:");
-    if (pw !== passwords[username]) return alert("Incorrect password.");
-  } else {
-    // first-time user registration
-    const pw = prompt("Set a password for this account:");
-    if (!pw) return alert("Password cannot be empty.");
-    passwords[username] = pw;
-    localStorage.setItem('faenoir_passwords', JSON.stringify(passwords));
-    alert("Account created!");
+/** Logout */
+function logout() {
+  const session = JSON.parse(localStorage.getItem(LOGIN_KEY) || "{}");
+
+  if (session.username) {
+    gasPost({ action: "log", username: session.username, reason: "logout" });
   }
 
-  const session = { username, timestamp: Date.now() };
-  localStorage.setItem(LOGIN_KEY, JSON.stringify(session));
-
-  showUser(username);
-  logToSheet(username, 'Sign In');
-}
-
-
-/* ==================================================================== */
-/* SHOW + LOGOUT + SESSION
-======================================================================= */
-
-function showUser(username) {
-  $('#login-btn').addClass('d-none');
-  $('#user-info').removeClass('d-none');
-  $('#user-avatar').attr('src', AVATARS[username] || 'assets/default-avatar.png');
-  $('#user-name').text(username);
-}
-
-function logout() {
-  const session = JSON.parse(localStorage.getItem(LOGIN_KEY));
-  if (session) logToSheet(session.username, 'Sign Out');
-
   localStorage.removeItem(LOGIN_KEY);
-  $('#user-info').addClass('d-none');
-  $('#login-btn').removeClass('d-none');
+  localStorage.removeItem(AVATAR_CACHE_KEY);
+
+  $("#user-info").addClass("d-none");
+  $("#login-btn").removeClass("d-none");
 }
 
-function checkLogin() {
-  const session = JSON.parse(localStorage.getItem(LOGIN_KEY));
+/* --------------------------- ROLES --------------------------- */
+
+function getRoles() {
+  const session = JSON.parse(localStorage.getItem(LOGIN_KEY) || "{}");
+  return session.roles || [];
+}
+export function isAdmin() {
+  return getRoles().includes("admin");
+}
+export function isMod() {
+  return getRoles().includes("mod");
+}
+
+/* ------------------------ LOGIN HISTORY ------------------------ */
+
+function recordLogin(username, method) {
+  const now = new Date().toISOString();
+
+  const history =
+    JSON.parse(localStorage.getItem(LOGIN_HISTORY_KEY) || "[]");
+
+  history.unshift({ user: username, method, ts: now });
+
+  localStorage.setItem(LOGIN_HISTORY_KEY, JSON.stringify(history.slice(0, 50)));
+}
+
+export function lastLogin() {
+  const history =
+    JSON.parse(localStorage.getItem(LOGIN_HISTORY_KEY) || "[]");
+  return history[0] || null;
+}
+
+/* ---------------------- SESSION CHECK ON LOAD ---------------------- */
+
+function checkExistingLogin() {
+  const session = JSON.parse(localStorage.getItem(LOGIN_KEY) || "null");
   if (!session) return;
 
-  // Session expires after 24 hours
+  // session expires after 24 hours
   if (Date.now() - session.timestamp > 24 * 60 * 60 * 1000) {
     localStorage.removeItem(LOGIN_KEY);
     return;
@@ -120,59 +174,48 @@ function checkLogin() {
   showUser(session.username);
 }
 
+/* ---------------------- INIT BUTTON LOGIC ---------------------- */
 
-/* ==================================================================== */
-/* GOOGLE SHEETS LOGGING
-======================================================================= */
+function initButtons() {
+  $(document).off("click.faelogin");
 
-function logToSheet(username, action) {
-  fetch(SHEET_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, action })
-  })
-  .then(r => r.json())
-  .then(data => console.log("Sheet:", data))
-  .catch(err => console.error("Sheet error:", err));
+  $(document).on("click.faelogin", "#open-login-modal", () =>
+    $("#loginModal").modal("show")
+  );
+
+  $(document).on("click.faelogin", "#toyhouse-login", startToyhouseLogin);
+
+  $(document).on("click.faelogin", "#logout-btn", logout);
 }
 
-
-/* ==================================================================== */
-/* BUTTON SETUP
-======================================================================= */
-
-function initLoginButtons() {
-  $(document).off('click.faenoirLogin');
-
-  $(document).on('click.faenoirLogin', '#login-btn, #login-submit', signIn);
-  $(document).on('click.faenoirLogin', '#logout-btn', logout);
-  $(document).on('click.faenoirLogin', '#toyhou-login-btn', startToyhouLogin);
-}
-
-
-/* ==================================================================== */
-/* OBSERVE HEADER (Charadex injects it later)
-======================================================================= */
+/* --------------------------- OBSERVE HEADER --------------------------- */
 
 const headerObserver = new MutationObserver(() => {
-  if ($('#login-btn').length && $('#logout-btn').length) {
-    initLoginButtons();
-    checkLogin();
+  if ($("#login-btn").length && $("#logout-btn").length) {
+    initButtons();
+    checkExistingLogin();
     headerObserver.disconnect();
   }
 });
 
 headerObserver.observe(document.body, { childList: true, subtree: true });
 
-
-/* ==================================================================== */
-/* LOAD CHARADEx + LOGIN CALLBACKS
-======================================================================= */
+/* --------------------------- PAGE INIT --------------------------- */
 
 document.addEventListener("DOMContentLoaded", () => {
   charadex.tools.loadIncludedFiles();
   charadex.tools.updateMeta();
-  charadex.tools.loadPage('#charadex-body', 100);
+  charadex.tools.loadPage("#charadex-body", 100);
 
-  handleToyhouCallback(); // NEW: detect Toyhouse login
+  initButtons();
+  checkExistingLogin();
+  handleAuthRedirect();
 });
+
+// Expose utility helpers if needed globally
+window.faenoir = {
+  startToyhouseLogin,
+  isAdmin,
+  isMod,
+  lastLogin,
+};
