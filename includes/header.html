@@ -29,7 +29,6 @@
             <a class="dropdown-item" href="species.html">About Species</a>
             <div class="dropdown-divider"></div>
             <a class="dropdown-item" href="#">Toyhou.se World</a>
-            <a class="dropdown-item" href="#">Discord Server</a>
           </div>
         </li>
 
@@ -58,14 +57,14 @@
             <a class="dropdown-item" href="staff.html">Staff</a>
             <a class="dropdown-item" href="terms.html">TOS</a>
             <a class="dropdown-item" href="faq.html">FAQ</a>
-            <div class="dropdown-divider"></div>
-            <a class="dropdown-item" href="#">Help Desk</a>
           </div>
         </li>
 
         <!-- Login -->
         <li class="nav-item ml-3" id="login-btn">
-          <button class="btn btn-primary" id="open-login-modal">Sign In</button>
+          <button class="btn btn-secondary btn-block" id="toyhouse-login">
+            <img src="../Faenoir/assets/toyhouse.png" class="mr-2" style="height:20px;"> Sign in with Toyhouse
+          </button>
         </li>
 
         <!-- Logged-in user info -->
@@ -79,34 +78,3 @@
     </div>
   </div>
 </nav>
-
-<!-- Login Modal -->
-<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-
-      <div class="modal-header">
-        <h5 class="modal-title" id="loginModalLabel">Sign In</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-
-      <div class="modal-body text-center">
-
-        <p class="mb-3">Choose a platform to sign in:</p>
-
-        <button id="discord-login" class="btn btn-primary btn-block mb-2">
-          <i class="fab fa-discord mr-2"></i> Sign in with Discord
-        </button>
-
-        <button id="toyhouse-login" class="btn btn-secondary btn-block">
-          <img src="../Faenoir/assets/toyhouse.png" class="mr-2" style="height:20px;"> 
-          Sign in with Toyhouse
-        </button>
-
-      </div>
-
-    </div>
-  </div>
-</div>
