@@ -1,6 +1,5 @@
 /* ===========================================================================
-   base.js — Toyhouse-Only Login for Faenoir
-   Backend: Google Apps Script (GAS)
+   base.js — Faenoir Toyhouse OAuth Login (Popup → Token → User → Roles)
 =========================================================================== */
 
 import { charadex } from '../utilities.js';
@@ -26,8 +25,8 @@ async function gasGET(params = {}) {
 
 /* ---------------------- TOYHOUSE LOGIN POPUP ---------------------- */
 
-function startToyhouseLogin() {
-  const authURL = `${GAS_URL}?action=toyhouStart`;
+export function startToyhouseLogin() {
+  const authURL = `${GAS_URL}?action=auth`;
 
   const popup = window.open(
     authURL,
@@ -41,7 +40,7 @@ function startToyhouseLogin() {
   }
 }
 
-/* --------------------------- HANDLE CALLBACK --------------------------- */
+/* --------------------------- MESSAGE LISTENER --------------------------- */
 
 window.addEventListener("message", async (event) => {
   const data = event.data;
@@ -51,6 +50,8 @@ window.addEventListener("message", async (event) => {
   const session = {
     token,
     username: user.username,
+    id: user.id,
+    avatar: user.avatar_url,
     timestamp: Date.now(),
   };
 
@@ -61,16 +62,10 @@ window.addEventListener("message", async (event) => {
   }
 
   // Load role from GAS
-  const roleResp = await gasGET({
-    action: "me",
-    token
-  });
-
-  if (roleResp && roleResp.user) {
-    session.roles = roleResp.user.roles || [];
-    session.avatar = roleResp.user.avatar || user.avatar_url || "";
+  const roleResp = await gasGET({ action: "me", userId: user.id });
+  if (roleResp && roleResp.role) {
+    session.role = roleResp.role;
     localStorage.setItem(LOGIN_KEY, JSON.stringify(session));
-    if (session.avatar) localStorage.setItem(AVATAR_CACHE_KEY, session.avatar);
   }
 
   showUser(session.username);
@@ -79,21 +74,20 @@ window.addEventListener("message", async (event) => {
 
 /* --------------------------- UI HANDLERS --------------------------- */
 
-function showUser(username) {
+export function showUser(username) {
   $("#login-btn").addClass("d-none");
   $("#user-info").removeClass("d-none");
 
-  const avatar = localStorage.getItem(AVATAR_CACHE_KEY) || "assets/default-avatar.png";
+  const avatar =
+    localStorage.getItem(AVATAR_CACHE_KEY) || "assets/default-avatar.png";
 
   $("#user-avatar").attr("src", avatar);
   $("#user-name").text(username);
 }
 
-function logout() {
+export function logout() {
   const session = JSON.parse(localStorage.getItem(LOGIN_KEY) || "{}");
-  if (session.username) {
-    gasGET({ action: "log", username: session.username, reason: "logout" });
-  }
+  if (session.username) recordLogin(session.username, "logout");
 
   localStorage.removeItem(LOGIN_KEY);
   localStorage.removeItem(AVATAR_CACHE_KEY);
@@ -104,17 +98,17 @@ function logout() {
 
 /* --------------------------- ROLES --------------------------- */
 
-function getRoles() {
+export function getRole() {
   const session = JSON.parse(localStorage.getItem(LOGIN_KEY) || "{}");
-  return session.roles || [];
+  return session.role || "user";
 }
 
 export function isAdmin() {
-  return getRoles().includes("admin");
+  return getRole() === "admin";
 }
+
 export function isMod() {
-  const roles = getRoles();
-  return roles.includes("mod") || roles.includes("admin");
+  return getRole() === "mod" || isAdmin();
 }
 
 /* ------------------------ LOGIN HISTORY ------------------------ */
@@ -138,6 +132,7 @@ function checkExistingLogin() {
   const session = JSON.parse(localStorage.getItem(LOGIN_KEY) || "null");
   if (!session) return;
 
+  // Auto-expire after 24 hours
   if (Date.now() - session.timestamp > 24 * 60 * 60 * 1000) {
     localStorage.removeItem(LOGIN_KEY);
     return;
@@ -150,6 +145,7 @@ function checkExistingLogin() {
 
 function initButtons() {
   $(document).off("click.faelogin");
+
   $(document).on("click.faelogin", "#login-submit", startToyhouseLogin);
   $(document).on("click.faelogin", "#logout-btn", logout);
 }
@@ -177,9 +173,12 @@ document.addEventListener("DOMContentLoaded", () => {
   checkExistingLogin();
 });
 
+// Expose for global usage
 window.faenoir = {
   startToyhouseLogin,
-  getRoles,
+  showUser,
+  logout,
+  getRole,
   isAdmin,
   isMod,
   lastLogin
