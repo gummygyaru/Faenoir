@@ -4,41 +4,62 @@
 import { charadex } from '../utilities.js';
 
 /* ==================================================================== */
-/* Toyhou “Login” Check (Visual Only)
+/* CONFIG
 ======================================================================= */
-async function checkToyhouLogin() {
-  const url = new URL(window.location.href);
-  if (url.searchParams.get('toyhou_callback') === 'success') {
-    console.log('Toyhou callback detected – treating as logged in (visual only)');
-    const username = url.searchParams.get('user') || 'Toyhou User';
-    showUser(username);
-    logToSheet(username, 'Toyhou Login');
-    history.replaceState({}, document.title, window.location.pathname); // clean up URL
-  }
-}
-
-/* ==================================================================== */
-/* Load Charadex Core
-======================================================================= */
-document.addEventListener("DOMContentLoaded", () => {
-  // Run Charadex utilities
-  charadex.tools.loadIncludedFiles();
-  charadex.tools.updateMeta();
-  charadex.tools.loadPage('#charadex-body', 100);
-
-  // Run login checks
-  checkToyhouLogin();
-});
-
-/* ==================================================================== */
-/* Frontend Login System (LocalStorage + Google Sheets)
-======================================================================= */
-
 const LOGIN_KEY = 'faenoir_user';
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycbx5f4V1TjMagGoZkb_6cHHuXrEWWE8xgBkv1Q19JS8Am7mjgwfgbE1HZaM89YipmzrteA/exec';
-const AVATARS = {}; // optional custom avatar map
+const AVATARS = {}; // optional username→image map
 
-/* ==================== SIGN IN ==================== */
+
+/* ==================================================================== */
+/* TOYHOUSE LOGIN (REDIRECT + CALLBACK SIMULATION)
+======================================================================= */
+
+// User clicks "Sign in with Toyhouse"
+function startToyhouLogin() {
+  const callback = encodeURIComponent(
+    window.location.origin + window.location.pathname + '?toyhou_callback=success'
+  );
+
+  // Redirect to Toyhouse’s login page (this works with any TH user)
+  window.location.href = `https://toyhou.se/~login?redirect=${callback}`;
+}
+
+
+// When Toyhouse sends them back here:
+function handleToyhouCallback() {
+  const url = new URL(window.location.href);
+  if (url.searchParams.get('toyhou_callback') !== 'success') return;
+
+  console.log('Toyhouse login detected');
+
+  // Toyhouse does NOT give us the username; user enters it once
+  let username = url.searchParams.get('user');
+  if (!username) {
+    username = prompt("Enter your Toyhouse username:");
+    if (!username) return alert("Toyhouse login cancelled.");
+  }
+
+  const session = {
+    username,
+    toyhou: true,
+    timestamp: Date.now()
+  };
+
+  localStorage.setItem(LOGIN_KEY, JSON.stringify(session));
+
+  showUser(username);
+  logToSheet(username, "Toyhouse Login");
+
+  // Remove callback from URL
+  history.replaceState({}, document.title, window.location.pathname);
+}
+
+
+/* ==================================================================== */
+/* DEFAULT FRONTEND LOGIN (LocalStorage)
+======================================================================= */
+
 async function signIn() {
   const username = prompt("Enter your username:");
   if (!username) return alert("Username cannot be empty.");
@@ -46,16 +67,16 @@ async function signIn() {
   let passwords = JSON.parse(localStorage.getItem('faenoir_passwords')) || {};
 
   if (passwords[username]) {
-    // existing user
+    // existing user login
     const pw = prompt("Enter your password:");
     if (pw !== passwords[username]) return alert("Incorrect password.");
   } else {
-    // new user
-    const pw = prompt("Set a password for your account:");
+    // first-time user registration
+    const pw = prompt("Set a password for this account:");
     if (!pw) return alert("Password cannot be empty.");
     passwords[username] = pw;
     localStorage.setItem('faenoir_passwords', JSON.stringify(passwords));
-    alert("Account created successfully!");
+    alert("Account created!");
   }
 
   const session = { username, timestamp: Date.now() };
@@ -65,7 +86,11 @@ async function signIn() {
   logToSheet(username, 'Sign In');
 }
 
-/* ==================== SHOW USER ==================== */
+
+/* ==================================================================== */
+/* SHOW + LOGOUT + SESSION
+======================================================================= */
+
 function showUser(username) {
   $('#login-btn').addClass('d-none');
   $('#user-info').removeClass('d-none');
@@ -73,7 +98,6 @@ function showUser(username) {
   $('#user-name').text(username);
 }
 
-/* ==================== LOGOUT ==================== */
 function logout() {
   const session = JSON.parse(localStorage.getItem(LOGIN_KEY));
   if (session) logToSheet(session.username, 'Sign Out');
@@ -83,25 +107,12 @@ function logout() {
   $('#login-btn').removeClass('d-none');
 }
 
-/* ==================== LOG TO GOOGLE SHEET ==================== */
-function logToSheet(username, action) {
-  fetch(SHEET_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, action })
-  })
-  .then(res => res.json())
-  .then(data => console.log('Sheet updated:', data))
-  .catch(err => console.error('Sheet update error:', err));
-}
-
-/* ==================== SESSION CHECK ==================== */
 function checkLogin() {
   const session = JSON.parse(localStorage.getItem(LOGIN_KEY));
   if (!session) return;
 
-  const now = Date.now();
-  if (now - session.timestamp > 24 * 60 * 60 * 1000) {
+  // Session expires after 24 hours
+  if (Date.now() - session.timestamp > 24 * 60 * 60 * 1000) {
     localStorage.removeItem(LOGIN_KEY);
     return;
   }
@@ -109,15 +120,40 @@ function checkLogin() {
   showUser(session.username);
 }
 
-/* ==================== BUTTON SETUP ==================== */
-function initLoginButtons() {
-  // ensure clean re-bind
-  $(document).off('click.faenoirLogin');
-  $(document).on('click.faenoirLogin', '#login-submit, #login-btn', signIn);
-  $(document).on('click.faenoirLogin', '#logout-btn', logout);
+
+/* ==================================================================== */
+/* GOOGLE SHEETS LOGGING
+======================================================================= */
+
+function logToSheet(username, action) {
+  fetch(SHEET_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, action })
+  })
+  .then(r => r.json())
+  .then(data => console.log("Sheet:", data))
+  .catch(err => console.error("Sheet error:", err));
 }
 
-/* ==================== OBSERVE HEADER ==================== */
+
+/* ==================================================================== */
+/* BUTTON SETUP
+======================================================================= */
+
+function initLoginButtons() {
+  $(document).off('click.faenoirLogin');
+
+  $(document).on('click.faenoirLogin', '#login-btn, #login-submit', signIn);
+  $(document).on('click.faenoirLogin', '#logout-btn', logout);
+  $(document).on('click.faenoirLogin', '#toyhou-login-btn', startToyhouLogin);
+}
+
+
+/* ==================================================================== */
+/* OBSERVE HEADER (Charadex injects it later)
+======================================================================= */
+
 const headerObserver = new MutationObserver(() => {
   if ($('#login-btn').length && $('#logout-btn').length) {
     initLoginButtons();
@@ -127,3 +163,16 @@ const headerObserver = new MutationObserver(() => {
 });
 
 headerObserver.observe(document.body, { childList: true, subtree: true });
+
+
+/* ==================================================================== */
+/* LOAD CHARADEx + LOGIN CALLBACKS
+======================================================================= */
+
+document.addEventListener("DOMContentLoaded", () => {
+  charadex.tools.loadIncludedFiles();
+  charadex.tools.updateMeta();
+  charadex.tools.loadPage('#charadex-body', 100);
+
+  handleToyhouCallback(); // NEW: detect Toyhouse login
+});
