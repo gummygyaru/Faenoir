@@ -38,32 +38,16 @@ charadex.tools = {
     return options;
   },
 
-
-// Load files via include
-// Will replace the entire div :: and execute any <script> tags inside (added by me)
-loadIncludedFiles() {
-  $(".load-html").each(function () {
-    const target = $(this);
-    $.get(this.dataset.source, function (data) {
-      // Create a temporary container to parse the loaded HTML
-      const temp = $('<div>').html(data);
-
-      // Replace the target with the HTML content (excluding scripts)
-      target.replaceWith(temp.contents());
-
-      // Find and re-execute scripts
-      temp.find('script').each(function () {
-        const script = document.createElement('script');
-        if (this.src) {
-          script.src = this.src;
-        } else {
-          script.textContent = this.textContent;
-        }
-        document.body.appendChild(script);
+  // Load files via include
+  // Will replace the entire div
+  loadIncludedFiles() {
+    $(".load-html").each(function () {
+      const target = $(this);
+      $.get(this.dataset.source, function (data) {
+        target.replaceWith(data);
       });
     });
-  });
-},
+  },
 
   // Load Page
   // Load selected areas
